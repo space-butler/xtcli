@@ -228,3 +228,12 @@ func GetXMLTVFile() ([]byte, error) {
 	}
 	return cli.xtreamClient.GetXMLTV()
 }
+
+func GetServerInfo() (*xtreamcodes.ServerInfo, *xtreamcodes.UserInfo, error) {
+	if !IsInitialized() {
+		return nil, nil, ErrClientNotInitialized
+	}
+
+	// The server and user info are populated when the client is created
+	return &cli.xtreamClient.ServerInfo, &cli.xtreamClient.UserInfo, nil
+}

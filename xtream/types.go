@@ -1,6 +1,8 @@
 package xtream
 
-import "time"
+import (
+	"time"
+)
 
 type Category struct {
 	ID     int64  `json:"category_id"`
