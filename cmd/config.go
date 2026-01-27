@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"xtream-dump/config"
+	"xtcli/config"
 
 	"github.com/spf13/cobra"
 )

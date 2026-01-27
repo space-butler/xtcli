@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"xtream-dump/xtream"
+	"xtcli/xtream"
 
 	"github.com/spf13/cobra"
 )

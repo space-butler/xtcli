@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"xtream-dump/config"
+	"xtcli/config"
 
 	"github.com/spf13/cobra"
 )
@@ -10,9 +10,9 @@ import (
 var cfg *config.Config
 
 var rootCmd = &cobra.Command{
-	Use:   "xtream-dump",
+	Use:   "xtcli",
 	Short: "A tool to dump Xtream Codes IPTV server data",
-	Long:  `xtream-dump is a command-line tool that allows users to extract and dump data from Xtream Codes IPTV servers.`,
+	Long:  `xtcli is a command-line tool that allows users to extract and dump data from Xtream Codes IPTV servers.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Skip config loading for commands that don't need it (like 'config create')
 		if cmd.Name() == "create" || cmd.Name() == "config" {
@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		if !config.Exists() {
-			return fmt.Errorf("config file does not exist. Run 'xtream-dump config create' to create a default config file")
+			return fmt.Errorf("config file does not exist. Run 'xtcli config create' to create a default config file")
 		}
 
 		var err error

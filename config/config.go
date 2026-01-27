@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"xtream-dump/consts"
+	"xtcli/consts"
 )
 
 // Exists checks if the config file exists and returns an error if it doesn't

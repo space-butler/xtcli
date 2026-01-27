@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"xtream-dump/xtream"
+	"xtcli/xtream"
 
 	"github.com/spf13/cobra"
 )

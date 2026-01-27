@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-	"xtream-dump/consts"
+	"xtcli/consts"
 
-	xtreamcodes "github.com/tellytv/go.xtream-codes"
+	xtreamcodes "github.com/space-butler/go.xtream-codes"
 )
 
 type client struct {

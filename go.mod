@@ -1,13 +1,11 @@
-module xtream-dump
+module xtcli
 
 go 1.24.7
 
-replace github.com/tellytv/go.xtream-codes v0.0.0-20220204001149-59925bc76764 => C:\Users\mca\Desktop\public-github\go.xtream-codes
-
 require (
 	github.com/olekukonko/tablewriter v1.1.2
+	github.com/space-butler/go.xtream-codes v0.0.3
 	github.com/spf13/cobra v1.10.2
-	github.com/tellytv/go.xtream-codes v0.0.0-20220204001149-59925bc76764
 )
 
 require (
@@ -23,6 +21,5 @@ require (
 	github.com/olekukonko/errors v1.1.0 // indirect
 	github.com/olekukonko/ll v0.1.3 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 )

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"xtream-dump/consts"
-	"xtream-dump/xtream"
+	"xtcli/consts"
+	"xtcli/xtream"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"

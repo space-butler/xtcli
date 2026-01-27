@@ -7,7 +7,7 @@ const (
 
 // File Names
 const (
-	CONFIG_FILE_NAME = ".xtream-dump"
+	CONFIG_FILE_NAME = ".xtcli"
 )
 
 // Category Types
