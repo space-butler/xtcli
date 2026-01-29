@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"xtcli/cache"
 	"xtcli/consts"
 
 	xtreamcodes "github.com/space-butler/go.xtream-codes"
@@ -23,6 +24,10 @@ func IsInitialized() bool {
 }
 
 func Initialize(username, password, serverURL string) error {
+	return InitializeWithCacheTTL(username, password, serverURL, 24)
+}
+
+func InitializeWithCacheTTL(username, password, serverURL string, cacheTTLHours int) error {
 	if IsInitialized() {
 		return nil
 	}
@@ -40,6 +45,13 @@ func Initialize(username, password, serverURL string) error {
 		serverURL:    serverURL,
 	}
 
+	// Initialize cache
+	cache.Initialize(cacheTTLHours)
+	if err := cache.Load(); err != nil {
+		// Log warning but don't fail initialization
+		fmt.Printf("Warning: Failed to load cache: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -48,6 +60,21 @@ func GetCategories(catType consts.CategoryType) ([]Category, error) {
 		return nil, ErrClientNotInitialized
 	}
 
+	// Try to get from cache first
+	if cachedCategories, found := cache.GetCategories(catType); found {
+		// Convert cache.Category to xtream.Category
+		result := make([]Category, len(cachedCategories))
+		for i, c := range cachedCategories {
+			result[i] = Category{
+				ID:     c.ID,
+				Name:   c.Name,
+				Parent: c.Parent,
+			}
+		}
+		return result, nil
+	}
+
+	// Fetch from server
 	var categories []xtreamcodes.Category
 	var err error = nil
 	switch catType {
@@ -70,12 +97,49 @@ func GetCategories(catType consts.CategoryType) ([]Category, error) {
 			Parent: int64(c.Parent),
 		})
 	}
+
+	// Convert to cache.Category and store in cache
+	cacheCategories := make([]cache.Category, len(result))
+	for i, c := range result {
+		cacheCategories[i] = cache.Category{
+			ID:     c.ID,
+			Name:   c.Name,
+			Parent: c.Parent,
+		}
+	}
+	cache.SetCategories(catType, cacheCategories)
+	cache.Save()
+
 	return result, nil
 }
 
 func GetStreamsByCategory(categoryID int64) ([]Stream, error) {
 	if !IsInitialized() {
 		return nil, ErrClientNotInitialized
+	}
+
+	// Try to get from cache first
+	if cachedStreams, found := cache.GetStreams(categoryID); found {
+		// Convert cache.Stream to xtream.Stream
+		result := make([]Stream, len(cachedStreams))
+		for i, s := range cachedStreams {
+			result[i] = Stream{
+				Added:              s.Added,
+				CategoryID:         s.CategoryID,
+				CategoryName:       s.CategoryName,
+				ContainerExtension: s.ContainerExtension,
+				CustomSid:          s.CustomSid,
+				DirectSource:       s.DirectSource,
+				EPGChannelID:       s.EPGChannelID,
+				Icon:               s.Icon,
+				ID:                 s.ID,
+				Name:               s.Name,
+				Number:             s.Number,
+				Rating:             s.Rating,
+				Type:               s.Type,
+			}
+		}
+		return result, nil
 	}
 
 	// Get live streams for the category
@@ -108,12 +172,56 @@ func GetStreamsByCategory(categoryID int64) ([]Stream, error) {
 		})
 	}
 
+	// Convert to cache.Stream and store in cache
+	cacheStreams := make([]cache.Stream, len(result))
+	for i, s := range result {
+		cacheStreams[i] = cache.Stream{
+			Added:              s.Added,
+			CategoryID:         s.CategoryID,
+			CategoryName:       s.CategoryName,
+			ContainerExtension: s.ContainerExtension,
+			CustomSid:          s.CustomSid,
+			DirectSource:       s.DirectSource,
+			EPGChannelID:       s.EPGChannelID,
+			Icon:               s.Icon,
+			ID:                 s.ID,
+			Name:               s.Name,
+			Number:             s.Number,
+			Rating:             s.Rating,
+			Type:               s.Type,
+		}
+	}
+	cache.SetStreams(categoryID, cacheStreams)
+	cache.Save()
+
 	return result, nil
 }
 
 func GetStream(streamID int64) (*Stream, error) {
 	if !IsInitialized() {
 		return nil, ErrClientNotInitialized
+	}
+
+	// Try to find in all cached streams first
+	allStreams := cache.GetAllStreams()
+	for _, s := range allStreams {
+		if s.ID == streamID {
+			return &Stream{
+				Added:              s.Added,
+				CategoryID:         s.CategoryID,
+				CategoryName:       s.CategoryName,
+				ContainerExtension: s.ContainerExtension,
+				CustomSid:          s.CustomSid,
+				DirectSource:       s.DirectSource,
+				EPGChannelID:       s.EPGChannelID,
+				Icon:               s.Icon,
+				ID:                 s.ID,
+				Name:               s.Name,
+				Number:             s.Number,
+				Rating:             s.Rating,
+				Type:               s.Type,
+			}, nil
+		}
 	}
 
 	// Get all live streams to populate cache and find the stream
@@ -160,6 +268,32 @@ func GetShortEPG(streamID int64, limit int) ([]EPG, error) {
 		limit = 4
 	}
 
+	// Try to get from cache first
+	if cachedEPG, found := cache.GetEPG(streamID); found {
+		// Convert cache.EPG to xtream.EPG
+		result := make([]EPG, 0, len(cachedEPG))
+		for i, e := range cachedEPG {
+			if i >= limit {
+				break
+			}
+			result = append(result, EPG{
+				ChannelID:      e.ChannelID,
+				Description:    e.Description,
+				End:            e.End,
+				EPGID:          e.EPGID,
+				HasArchive:     e.HasArchive,
+				ID:             e.ID,
+				Lang:           e.Lang,
+				NowPlaying:     e.NowPlaying,
+				Start:          e.Start,
+				StartTimestamp: e.StartTimestamp,
+				StopTimestamp:  e.StopTimestamp,
+				Title:          e.Title,
+			})
+		}
+		return result, nil
+	}
+
 	epgData, err := cli.xtreamClient.GetShortEPG(strconv.FormatInt(streamID, 10), limit)
 	if err != nil {
 		return nil, err
@@ -198,6 +332,27 @@ func GetShortEPG(streamID int64, limit int) ([]EPG, error) {
 			Title:          string(e.Title),
 		})
 	}
+
+	// Convert to cache.EPG and store in cache
+	cacheEPG := make([]cache.EPG, len(result))
+	for i, e := range result {
+		cacheEPG[i] = cache.EPG{
+			ChannelID:      e.ChannelID,
+			Description:    e.Description,
+			End:            e.End,
+			EPGID:          e.EPGID,
+			HasArchive:     e.HasArchive,
+			ID:             e.ID,
+			Lang:           e.Lang,
+			NowPlaying:     e.NowPlaying,
+			Start:          e.Start,
+			StartTimestamp: e.StartTimestamp,
+			StopTimestamp:  e.StopTimestamp,
+			Title:          e.Title,
+		}
+	}
+	cache.SetEPG(streamID, cacheEPG)
+	cache.Save()
 
 	return result, nil
 }

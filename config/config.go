@@ -118,3 +118,15 @@ func GetFavorites() ([]string, error) {
 	}
 	return cfg.Favorites, nil
 }
+
+// GetCacheTTL returns the cache time-to-live in hours (default: 24)
+func GetCacheTTL() (int, error) {
+	cfg, err := Load()
+	if err != nil {
+		return 24, err
+	}
+	if cfg.CacheTTL <= 0 {
+		return 24, nil
+	}
+	return cfg.CacheTTL, nil
+}

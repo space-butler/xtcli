@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"xtcli/config"
+	"xtcli/xtream"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,17 @@ var rootCmd = &cobra.Command{
 
 		var err error
 		cfg, err = config.Load()
-		return err
+		if err != nil {
+			return err
+		}
+
+		// Initialize xtream client with cache TTL from config
+		cacheTTL, _ := config.GetCacheTTL()
+		if err := xtream.InitializeWithCacheTTL(cfg.Username, cfg.Password, cfg.Host, cacheTTL); err != nil {
+			return err
+		}
+
+		return nil
 	},
 }
 

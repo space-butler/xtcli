@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"xtcli/cache"
 	"xtcli/config"
 
 	"github.com/spf13/cobra"
@@ -87,11 +88,49 @@ var favListCmd = &cobra.Command{
 	},
 }
 
+var cacheCmd = &cobra.Command{
+	Use:   "cache",
+	Short: "Manage cache",
+	Args:  cobra.NoArgs,
+}
+
+var cacheClearCmd = &cobra.Command{
+	Use:   "clear",
+	Short: "Clear the local cache",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := cache.Clear(); err != nil {
+			return err
+		}
+
+		fmt.Println("Cache cleared successfully")
+		return nil
+	},
+}
+
+var cacheInfoCmd = &cobra.Command{
+	Use:   "info",
+	Short: "Show cache information",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cachePath := cache.GetCachePath()
+		fmt.Printf("Cache file: %s\n", cachePath)
+
+		cacheTTL, _ := config.GetCacheTTL()
+		fmt.Printf("Cache TTL: %d hours\n", cacheTTL)
+
+		return nil
+	},
+}
+
 func init() {
+	cacheCmd.AddCommand(cacheClearCmd)
+	cacheCmd.AddCommand(cacheInfoCmd)
 	favCmd.AddCommand(favAddCmd)
 	favCmd.AddCommand(favDelCmd)
 	favCmd.AddCommand(favListCmd)
 	configCmd.AddCommand(configCreateCmd)
 	configCmd.AddCommand(favCmd)
+	configCmd.AddCommand(cacheCmd)
 	rootCmd.AddCommand(configCmd)
 }

@@ -22,11 +22,6 @@ var serverInfoCmd = &cobra.Command{
 }
 
 func handleServerInfo() error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return fmt.Errorf("failed to initialize xtream client: %w", err)
-	}
-
 	serverInfo, userInfo, err := xtream.GetServerInfo()
 	if err != nil {
 		return fmt.Errorf("failed to get server info: %w", err)

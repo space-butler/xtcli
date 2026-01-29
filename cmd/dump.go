@@ -54,11 +54,6 @@ func init() {
 }
 
 func handleDumpXMLTV(filePath string) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	xmltvData, err := xtream.GetXMLTVFile()
 	if err != nil {
 		return err
@@ -74,11 +69,6 @@ func handleDumpXMLTV(filePath string) error {
 }
 
 func handleDumpM3U(streamIDs []int64, filePath string) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	// Create M3U8 content
 	m3uContent := "#EXTM3U\n"
 
@@ -112,8 +102,7 @@ func handleDumpM3U(streamIDs []int64, filePath string) error {
 	}
 
 	// Write to file
-	err = os.WriteFile(filePath, []byte(m3uContent), 0644)
-	if err != nil {
+	if err := os.WriteFile(filePath, []byte(m3uContent), 0644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 

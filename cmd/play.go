@@ -30,10 +30,6 @@ func init() {
 }
 
 func handlePlayStream(streamID int64) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
 	format := "ts"
 	streamURL, err := xtream.GetStreamURL(streamID, format)
 	if err != nil {

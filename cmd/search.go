@@ -34,11 +34,6 @@ func init() {
 }
 
 func handleSearchStream(searchTerm string) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	// Get all live categories
 	categories, err := xtream.GetCategories(consts.CATEGORY_TYPE_LIVE)
 	if err != nil {

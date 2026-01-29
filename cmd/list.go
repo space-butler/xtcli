@@ -111,11 +111,6 @@ func init() {
 }
 
 func handleListCategories(catType consts.CategoryType) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	categories, err := xtream.GetCategories(catType)
 	if err != nil {
 		return err
@@ -136,11 +131,6 @@ func handleListCategories(catType consts.CategoryType) error {
 }
 
 func handleListStreams(categoryID int64) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	streams, err := xtream.GetStreamsByCategory(categoryID)
 	if err != nil {
 		return err
@@ -162,11 +152,6 @@ func handleListStreams(categoryID int64) error {
 }
 
 func handleListStream(streamID int64) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	stream, err := xtream.GetStream(streamID)
 	if err != nil {
 		return err
@@ -195,11 +180,6 @@ func handleListStream(streamID int64) error {
 }
 
 func handleListEPG(streamID int64, limit int) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	epgData, err := xtream.GetShortEPG(streamID, limit)
 	if err != nil {
 		return err
@@ -226,11 +206,6 @@ func handleListEPG(streamID int64, limit int) error {
 }
 
 func handleGetURL(streamID int64, format string) error {
-	err := xtream.Initialize(cfg.Username, cfg.Password, cfg.Host)
-	if err != nil {
-		return err
-	}
-
 	url, err := xtream.GetStreamURL(streamID, format)
 	if err != nil {
 		return err
