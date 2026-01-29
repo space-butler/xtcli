@@ -122,13 +122,12 @@ func handleListCategories(catType consts.CategoryType) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.Header("ID", "Name", "Parent ID")
+	table.Header("ID", "Name")
 
 	for _, category := range categories {
 		table.Append(
 			strconv.FormatInt(category.ID, 10),
 			category.Name,
-			strconv.FormatInt(category.Parent, 10),
 		)
 	}
 
@@ -148,15 +147,13 @@ func handleListStreams(categoryID int64) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.Header("ID", "Name", "Category", "Type", "Extension")
+	table.Header("ID", "Name", "Type")
 
 	for _, stream := range streams {
 		table.Append(
 			strconv.FormatInt(stream.ID, 10),
 			stream.Name,
-			stream.CategoryName,
 			stream.Type,
-			stream.ContainerExtension,
 		)
 	}
 
