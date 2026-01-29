@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"xtcli/cache"
 	"xtcli/config"
+	"xtcli/consts"
+	"xtcli/xtream"
 
 	"github.com/spf13/cobra"
 )
@@ -108,6 +110,15 @@ var cacheClearCmd = &cobra.Command{
 	},
 }
 
+var cacheUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update the local cache with fresh data from server",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return handleCacheUpdate()
+	},
+}
+
 var cacheInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Show cache information",
@@ -123,8 +134,56 @@ var cacheInfoCmd = &cobra.Command{
 	},
 }
 
+func handleCacheUpdate() error {
+	fmt.Println("Updating cache with fresh data from server...")
+
+	// Clear existing cache to force refresh
+	if err := cache.Clear(); err != nil {
+		return fmt.Errorf("failed to clear cache: %v", err)
+	}
+
+	// Fetch live categories
+	fmt.Print("Fetching live categories... ")
+	liveCategories, err := xtream.GetCategories(consts.CATEGORY_TYPE_LIVE)
+	if err != nil {
+		fmt.Println("FAILED")
+		return fmt.Errorf("failed to fetch live categories: %v", err)
+	}
+	fmt.Printf("OK (%d categories)\n", len(liveCategories))
+
+	// Fetch VOD categories
+	fmt.Print("Fetching VOD categories... ")
+	vodCategories, err := xtream.GetCategories(consts.CATEGORY_TYPE_VOD)
+	if err != nil {
+		fmt.Println("FAILED")
+		return fmt.Errorf("failed to fetch VOD categories: %v", err)
+	}
+	fmt.Printf("OK (%d categories)\n", len(vodCategories))
+
+	// Fetch streams for each live category
+	totalStreams := 0
+	fmt.Printf("Fetching streams for %d live categories...\n", len(liveCategories))
+	for i, category := range liveCategories {
+		fmt.Printf("  [%d/%d] %s... ", i+1, len(liveCategories), category.Name)
+		streams, err := xtream.GetStreamsByCategory(category.ID)
+		if err != nil {
+			fmt.Printf("FAILED (%v)\n", err)
+			continue
+		}
+		fmt.Printf("OK (%d streams)\n", len(streams))
+		totalStreams += len(streams)
+	}
+
+	fmt.Printf("\nCache update completed successfully!\n")
+	fmt.Printf("Cached %d live categories, %d VOD categories, and %d streams\n",
+		len(liveCategories), len(vodCategories), totalStreams)
+
+	return nil
+}
+
 func init() {
 	cacheCmd.AddCommand(cacheClearCmd)
+	cacheCmd.AddCommand(cacheUpdateCmd)
 	cacheCmd.AddCommand(cacheInfoCmd)
 	favCmd.AddCommand(favAddCmd)
 	favCmd.AddCommand(favDelCmd)
