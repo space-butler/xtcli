@@ -60,3 +60,61 @@ func Load() (*Config, error) {
 
 	return &cfg, nil
 }
+
+// AddFavorites adds stream IDs to the favorites list
+func AddFavorites(streamIDs []string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	// Create a map for quick lookup to avoid duplicates
+	existing := make(map[string]bool)
+	for _, id := range cfg.Favorites {
+		existing[id] = true
+	}
+
+	// Add new stream IDs if not already present
+	for _, id := range streamIDs {
+		if !existing[id] {
+			cfg.Favorites = append(cfg.Favorites, id)
+			existing[id] = true
+		}
+	}
+
+	return Save(cfg)
+}
+
+// RemoveFavorites removes stream IDs from the favorites list
+func RemoveFavorites(streamIDs []string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	// Create a map of IDs to remove
+	toRemove := make(map[string]bool)
+	for _, id := range streamIDs {
+		toRemove[id] = true
+	}
+
+	// Filter out the stream IDs to remove
+	newFavorites := make([]string, 0)
+	for _, id := range cfg.Favorites {
+		if !toRemove[id] {
+			newFavorites = append(newFavorites, id)
+		}
+	}
+
+	cfg.Favorites = newFavorites
+	return Save(cfg)
+}
+
+// GetFavorites returns the list of favorite stream IDs
+func GetFavorites() ([]string, error) {
+	cfg, err := Load()
+	if err != nil {
+		return nil, err
+	}
+	return cfg.Favorites, nil
+}
