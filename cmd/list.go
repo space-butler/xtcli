@@ -44,14 +44,15 @@ var listCategoriesCmd = &cobra.Command{
 var listStreamsCmd = &cobra.Command{
 	Use:     "streams <category-id>",
 	Aliases: []string{"s"},
-	Short:   "List streams for a given category ID",
+	Short:   "List streams for a given category ID (live or vod)",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		categoryID, err := strconv.ParseInt(args[0], 10, 64)
 		if err != nil {
 			return err
 		}
-		return handleListStreams(categoryID)
+		streamType, _ := cmd.Flags().GetString("type")
+		return handleListStreams(categoryID, streamType)
 	},
 }
 
@@ -101,6 +102,7 @@ var listURLCmd = &cobra.Command{
 func init() {
 	listURLCmd.Flags().StringP("format", "f", "ts", "Stream format (ts, m3u8, etc.)")
 	listEPGCmd.Flags().IntP("limit", "l", 4, "Number of EPG entries to retrieve")
+	listStreamsCmd.Flags().StringP("type", "t", "live", "Stream type: live or vod (video on demand)")
 
 	listCmd.AddCommand(listCategoriesCmd)
 	listCmd.AddCommand(listStreamsCmd)
@@ -130,8 +132,16 @@ func handleListCategories(catType consts.CategoryType) error {
 	return nil
 }
 
-func handleListStreams(categoryID int64) error {
-	streams, err := xtream.GetStreamsByCategory(categoryID)
+func handleListStreams(categoryID int64, streamType string) error {
+	var streams []xtream.Stream
+	var err error
+
+	switch streamType {
+	case "vod":
+		streams, err = xtream.GetVodStreamsByCategory(categoryID)
+	default:
+		streams, err = xtream.GetStreamsByCategory(categoryID)
+	}
 	if err != nil {
 		return err
 	}

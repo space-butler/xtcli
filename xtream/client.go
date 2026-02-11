@@ -113,6 +113,9 @@ func GetCategories(catType consts.CategoryType) ([]Category, error) {
 	return result, nil
 }
 
+// GetStreamsByCategory returns live streams for the given category ID.
+// It uses the caching layer: reads from cache when valid, and on miss fetches from the provider
+// then updates the cache (SetStreams + Save) before returning.
 func GetStreamsByCategory(categoryID int64) ([]Stream, error) {
 	if !IsInitialized() {
 		return nil, ErrClientNotInitialized
@@ -192,6 +195,92 @@ func GetStreamsByCategory(categoryID int64) ([]Stream, error) {
 		}
 	}
 	cache.SetStreams(categoryID, cacheStreams)
+	cache.Save()
+
+	return result, nil
+}
+
+// GetVodStreamsByCategory returns VOD (video on demand) streams for the given category ID.
+// It uses the caching layer: reads from cache when valid, and on miss fetches from the provider
+// then updates the cache (SetVODStreams + Save) before returning.
+func GetVodStreamsByCategory(categoryID int64) ([]Stream, error) {
+	if !IsInitialized() {
+		return nil, ErrClientNotInitialized
+	}
+
+	// Try to get from cache first
+	if cachedStreams, found := cache.GetVODStreams(categoryID); found {
+		result := make([]Stream, len(cachedStreams))
+		for i, s := range cachedStreams {
+			result[i] = Stream{
+				Added:              s.Added,
+				CategoryID:         s.CategoryID,
+				CategoryName:       s.CategoryName,
+				ContainerExtension: s.ContainerExtension,
+				CustomSid:          s.CustomSid,
+				DirectSource:       s.DirectSource,
+				EPGChannelID:       s.EPGChannelID,
+				Icon:               s.Icon,
+				ID:                 s.ID,
+				Name:               s.Name,
+				Number:             s.Number,
+				Rating:             s.Rating,
+				Type:               s.Type,
+			}
+		}
+		return result, nil
+	}
+
+	// Fetch VOD streams from server
+	streams, err := cli.xtreamClient.GetVideoOnDemandStreams(strconv.FormatInt(categoryID, 10))
+	if err != nil {
+		return nil, err
+	}
+
+	var result []Stream
+	for _, s := range streams {
+		var added time.Time
+		if s.Added != nil {
+			added = s.Added.Time
+		}
+
+		result = append(result, Stream{
+			Added:              added,
+			CategoryID:         int64(s.CategoryID),
+			CategoryName:       s.CategoryName,
+			ContainerExtension: s.ContainerExtension,
+			CustomSid:          s.CustomSid,
+			DirectSource:       s.DirectSource,
+			EPGChannelID:       s.EPGChannelID,
+			Icon:               s.Icon,
+			ID:                 int64(s.ID),
+			Name:               s.Name,
+			Number:             int64(s.Number),
+			Rating:             float32(s.Rating),
+			Type:               s.Type,
+		})
+	}
+
+	// Store in cache
+	cacheStreams := make([]cache.Stream, len(result))
+	for i, s := range result {
+		cacheStreams[i] = cache.Stream{
+			Added:              s.Added,
+			CategoryID:         s.CategoryID,
+			CategoryName:       s.CategoryName,
+			ContainerExtension: s.ContainerExtension,
+			CustomSid:          s.CustomSid,
+			DirectSource:       s.DirectSource,
+			EPGChannelID:       s.EPGChannelID,
+			Icon:               s.Icon,
+			ID:                 s.ID,
+			Name:               s.Name,
+			Number:             s.Number,
+			Rating:             s.Rating,
+			Type:               s.Type,
+		}
+	}
+	cache.SetVODStreams(categoryID, cacheStreams)
 	cache.Save()
 
 	return result, nil
@@ -375,6 +464,18 @@ func GetStreamURL(streamID int64, format string) (string, error) {
 	}
 
 	return url, nil
+}
+
+// GetVodStreamURL returns the direct stream URL for a VOD stream (movie).
+// Format is typically "mp4" or "mkv". The Xtream API uses baseURL/movie/username/password/streamID.ext
+func GetVodStreamURL(streamID int64, format string) (string, error) {
+	if !IsInitialized() {
+		return "", ErrClientNotInitialized
+	}
+	if format == "" {
+		format = "mp4"
+	}
+	return fmt.Sprintf("%s/movie/%s/%s/%d.%s", cli.serverURL, cli.username, cli.password, streamID, format), nil
 }
 
 func GetXMLTVFile() ([]byte, error) {
