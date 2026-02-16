@@ -76,6 +76,7 @@ func handleDownload(streamID int64, output, streamType, format string) error {
 		"-I", "dummy",
 		"--no-video-title-show",
 		"--quiet",
+		"--play-and-exit",
 		streamURL,
 		"--sout", sout,
 	)
@@ -92,7 +93,7 @@ func handleDownload(streamID int64, output, streamType, format string) error {
 	// Progress goroutine: poll file size and update status line
 	done := make(chan struct{})
 	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
+		ticker := time.NewTicker(1000 * time.Millisecond)
 		defer ticker.Stop()
 		var lastSize int64
 		var lastTime time.Time
