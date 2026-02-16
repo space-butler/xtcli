@@ -26,7 +26,8 @@ var downloadCmd = &cobra.Command{
 		output, _ := cmd.Flags().GetString("output")
 		streamType, _ := cmd.Flags().GetString("type")
 		format, _ := cmd.Flags().GetString("format")
-		return handleDownload(streamID, output, streamType, format)
+		quiet, _ := cmd.Flags().GetBool("quiet")
+		return handleDownload(streamID, output, streamType, format, quiet)
 	},
 }
 
@@ -34,10 +35,11 @@ func init() {
 	downloadCmd.Flags().StringP("output", "o", "", "Output file path (default: stream_<id>.<ext>)")
 	downloadCmd.Flags().StringP("type", "t", "vod", "Stream type: live or vod")
 	downloadCmd.Flags().StringP("format", "f", "mp4", "Format/extension for VOD (e.g. mp4, mkv)")
+	downloadCmd.Flags().BoolP("quiet", "q", false, "Quiet mode (no progress output)")
 	rootCmd.AddCommand(downloadCmd)
 }
 
-func handleDownload(streamID int64, output, streamType, format string) error {
+func handleDownload(streamID int64, output, streamType, format string, quiet bool) error {
 	if cfg.VlcPath == "" {
 		return fmt.Errorf("vlc_path not set in config (required for download); add it to ~/.xtcli")
 	}
@@ -70,7 +72,9 @@ func handleDownload(streamID int64, output, streamType, format string) error {
 	// -I dummy: headless; --sout: stream output to file
 	sout := fmt.Sprintf("#std{access=file,mux=%s,dst=%s}", format, absOutput)
 
-	fmt.Printf("Downloading stream %d to %s using VLC...\n", streamID, output)
+	if !quiet {
+		fmt.Printf("Downloading stream %d to %s using VLC...\n", streamID, output)
+	}
 
 	vlcCmd := exec.Command(cfg.VlcPath,
 		"-I", "dummy",
@@ -92,42 +96,44 @@ func handleDownload(streamID int64, output, streamType, format string) error {
 
 	// Progress goroutine: poll file size and update status line
 	done := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(1000 * time.Millisecond)
-		defer ticker.Stop()
-		var lastSize int64
-		var lastTime time.Time
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-done:
-				return
-			case <-ticker.C:
-				info, err := os.Stat(absOutput)
-				if err != nil {
-					continue
-				}
-				size := info.Size()
-				now := time.Now()
-				mb := float64(size) / (1024 * 1024)
-				speed := ""
-				if !lastTime.IsZero() && now.After(lastTime) {
-					elapsed := now.Sub(lastTime).Seconds()
-					if elapsed > 0 {
-						deltaMB := float64(size-lastSize) / (1024 * 1024)
-						mbPerSec := deltaMB / elapsed
-						if mbPerSec > 0 {
-							speed = fmt.Sprintf(" (%.1f MB/s)", mbPerSec)
+	if !quiet {
+		go func() {
+			ticker := time.NewTicker(1000 * time.Millisecond)
+			defer ticker.Stop()
+			var lastSize int64
+			var lastTime time.Time
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-done:
+					return
+				case <-ticker.C:
+					info, err := os.Stat(absOutput)
+					if err != nil {
+						continue
+					}
+					size := info.Size()
+					now := time.Now()
+					mb := float64(size) / (1024 * 1024)
+					speed := ""
+					if !lastTime.IsZero() && now.After(lastTime) {
+						elapsed := now.Sub(lastTime).Seconds()
+						if elapsed > 0 {
+							deltaMB := float64(size-lastSize) / (1024 * 1024)
+							mbPerSec := deltaMB / elapsed
+							if mbPerSec > 0 {
+								speed = fmt.Sprintf(" (%.1f MB/s)", mbPerSec)
+							}
 						}
 					}
+					lastSize = size
+					lastTime = now
+					fmt.Fprintf(os.Stderr, "\r  Downloaded: %.1f MB%s   ", mb, speed)
 				}
-				lastSize = size
-				lastTime = now
-				fmt.Fprintf(os.Stderr, "\r  Downloaded: %.1f MB%s   ", mb, speed)
 			}
-		}
-	}()
+		}()
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -138,10 +144,12 @@ func handleDownload(streamID int64, output, streamType, format string) error {
 	<-done
 	cancel()
 
-	if _, err := os.Stat(absOutput); err == nil {
-		info, _ := os.Stat(absOutput)
-		sizeMB := float64(info.Size()) / (1024 * 1024)
-		fmt.Fprintf(os.Stderr, "\r  Done: %.1f MB saved to %s\n", sizeMB, output)
+	if !quiet {
+		if _, err := os.Stat(absOutput); err == nil {
+			info, _ := os.Stat(absOutput)
+			sizeMB := float64(info.Size()) / (1024 * 1024)
+			fmt.Fprintf(os.Stderr, "\r  Done: %.1f MB saved to %s\n", sizeMB, output)
+		}
 	}
 
 	if err := <-errCh; err != nil {
