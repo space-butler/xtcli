@@ -34,7 +34,7 @@ var downloadCmd = &cobra.Command{
 func init() {
 	downloadCmd.Flags().StringP("output", "o", "", "Output file path (default: stream_<id>.<ext>)")
 	downloadCmd.Flags().StringP("type", "t", "vod", "Stream type: live or vod")
-	downloadCmd.Flags().StringP("format", "f", "mp4", "Format/extension for VOD (e.g. mp4, mkv)")
+	downloadCmd.Flags().StringP("format", "f", "mkv", "Format/extension for VOD (e.g. mkv, mp4)")
 	downloadCmd.Flags().BoolP("quiet", "q", false, "Quiet mode (no progress output)")
 	rootCmd.AddCommand(downloadCmd)
 }
