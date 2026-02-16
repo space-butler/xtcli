@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"xtcli/consts"
 	"xtcli/xtream"
 
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func init() {
 
 func handleDownload(streamID int64, output, streamType, format string, quiet bool) error {
 	if cfg.VlcPath == "" {
-		return fmt.Errorf("vlc_path not set in config (required for download); add it to ~/.xtcli")
+		return fmt.Errorf("vlc_path not set in config (required for download); add it to ~/." + consts.CONFIG_FILE_NAME)
 	}
 
 	var streamURL string
