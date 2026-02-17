@@ -40,6 +40,7 @@ func CreateDefault() error {
 		Username: "your_user_name",
 		Password: "your_password",
 		Host:     "https://path.to.your.xtream.iptv.server",
+		VlcPath:  "/path/to/vlc",
 	}
 	return Save(cfg)
 }
