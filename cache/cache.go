@@ -37,6 +37,7 @@ func Load() error {
 				LiveCategories: []Category{},
 				VODCategories:  []Category{},
 				Streams:        make(map[int64][]Stream),
+				VODStreams:     make(map[int64][]Stream),
 				EPGData:        make(map[int64][]EPG),
 			}
 			return nil
@@ -52,12 +53,16 @@ func Load() error {
 			LiveCategories: []Category{},
 			VODCategories:  []Category{},
 			Streams:        make(map[int64][]Stream),
+			VODStreams:     make(map[int64][]Stream),
 			EPGData:        make(map[int64][]EPG),
 		}
 		return nil
 	}
 
 	cacheData = &cache
+	if cacheData.VODStreams == nil {
+		cacheData.VODStreams = make(map[int64][]Stream)
+	}
 	return nil
 }
 
@@ -98,6 +103,7 @@ func Clear() error {
 		LiveCategories: []Category{},
 		VODCategories:  []Category{},
 		Streams:        make(map[int64][]Stream),
+		VODStreams:     make(map[int64][]Stream),
 		EPGData:        make(map[int64][]EPG),
 	}
 
@@ -135,6 +141,7 @@ func SetCategories(catType consts.CategoryType, categories []Category) {
 			LiveCategories: []Category{},
 			VODCategories:  []Category{},
 			Streams:        make(map[int64][]Stream),
+			VODStreams:     make(map[int64][]Stream),
 			EPGData:        make(map[int64][]EPG),
 		}
 	}
@@ -167,6 +174,7 @@ func SetStreams(categoryID int64, streams []Stream) {
 			LiveCategories: []Category{},
 			VODCategories:  []Category{},
 			Streams:        make(map[int64][]Stream),
+			VODStreams:     make(map[int64][]Stream),
 			EPGData:        make(map[int64][]EPG),
 		}
 	}
@@ -176,6 +184,41 @@ func SetStreams(categoryID int64, streams []Stream) {
 	}
 
 	cacheData.Streams[categoryID] = streams
+}
+
+// GetVODStreams returns cached VOD streams for a category or nil if not available
+func GetVODStreams(categoryID int64) ([]Stream, bool) {
+	if cacheData == nil || IsStale() {
+		return nil, false
+	}
+
+	if cacheData.VODStreams == nil {
+		return nil, false
+	}
+	if streams, ok := cacheData.VODStreams[categoryID]; ok {
+		return streams, true
+	}
+
+	return nil, false
+}
+
+// SetVODStreams stores VOD streams in the cache for a category
+func SetVODStreams(categoryID int64, streams []Stream) {
+	if cacheData == nil {
+		cacheData = &CacheData{
+			LiveCategories: []Category{},
+			VODCategories:  []Category{},
+			Streams:        make(map[int64][]Stream),
+			VODStreams:     make(map[int64][]Stream),
+			EPGData:        make(map[int64][]EPG),
+		}
+	}
+
+	if cacheData.VODStreams == nil {
+		cacheData.VODStreams = make(map[int64][]Stream)
+	}
+
+	cacheData.VODStreams[categoryID] = streams
 }
 
 // GetEPG returns cached EPG data for a stream or nil if not available
@@ -198,6 +241,7 @@ func SetEPG(streamID int64, epg []EPG) {
 			LiveCategories: []Category{},
 			VODCategories:  []Category{},
 			Streams:        make(map[int64][]Stream),
+			VODStreams:     make(map[int64][]Stream),
 			EPGData:        make(map[int64][]EPG),
 		}
 	}

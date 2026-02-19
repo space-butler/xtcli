@@ -31,5 +31,14 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# MacOS metadata files
+.DS_Store
+
+# Video files
+*.mp4
+*.mkv
+*.avi
+*.mpeg

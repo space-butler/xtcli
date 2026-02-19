@@ -49,6 +49,7 @@ type CacheData struct {
 	Timestamp      time.Time          `json:"timestamp"`
 	LiveCategories []Category         `json:"live_categories"`
 	VODCategories  []Category         `json:"vod_categories"`
-	Streams        map[int64][]Stream `json:"streams"`  // Key: category ID
-	EPGData        map[int64][]EPG    `json:"epg_data"` // Key: stream ID
+	Streams        map[int64][]Stream `json:"streams"`     // Key: live category ID
+	VODStreams     map[int64][]Stream `json:"vod_streams"` // Key: VOD category ID
+	EPGData        map[int64][]EPG    `json:"epg_data"`   // Key: stream ID
 }

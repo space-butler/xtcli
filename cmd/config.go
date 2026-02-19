@@ -160,8 +160,8 @@ func handleCacheUpdate() error {
 	}
 	fmt.Printf("OK (%d categories)\n", len(vodCategories))
 
-	// Fetch streams for each live category
-	totalStreams := 0
+	// Fetch streams for each live category (updates cache)
+	totalLiveStreams := 0
 	fmt.Printf("Fetching streams for %d live categories...\n", len(liveCategories))
 	for i, category := range liveCategories {
 		fmt.Printf("  [%d/%d] %s... ", i+1, len(liveCategories), category.Name)
@@ -171,12 +171,26 @@ func handleCacheUpdate() error {
 			continue
 		}
 		fmt.Printf("OK (%d streams)\n", len(streams))
-		totalStreams += len(streams)
+		totalLiveStreams += len(streams)
+	}
+
+	// Fetch streams for each VOD category (updates cache)
+	totalVODStreams := 0
+	fmt.Printf("Fetching streams for %d VOD categories...\n", len(vodCategories))
+	for i, category := range vodCategories {
+		fmt.Printf("  [%d/%d] %s... ", i+1, len(vodCategories), category.Name)
+		streams, err := xtream.GetVodStreamsByCategory(category.ID)
+		if err != nil {
+			fmt.Printf("FAILED (%v)\n", err)
+			continue
+		}
+		fmt.Printf("OK (%d streams)\n", len(streams))
+		totalVODStreams += len(streams)
 	}
 
 	fmt.Printf("\nCache update completed successfully!\n")
-	fmt.Printf("Cached %d live categories, %d VOD categories, and %d streams\n",
-		len(liveCategories), len(vodCategories), totalStreams)
+	fmt.Printf("Cached %d live categories, %d VOD categories, %d live streams, %d VOD streams\n",
+		len(liveCategories), len(vodCategories), totalLiveStreams, totalVODStreams)
 
 	return nil
 }
