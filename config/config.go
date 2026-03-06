@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -133,6 +134,28 @@ func GetFavorites() ([]Favorite, error) {
 		return nil, err
 	}
 	return cfg.Favorites, nil
+}
+
+// GetFavorite looks up a single favorite by number (if arg is an integer) or name (case-insensitive).
+func GetFavorite(arg string) (*Favorite, error) {
+	cfg, err := Load()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range cfg.Favorites {
+		if n, err := strconv.Atoi(arg); err == nil {
+			if f.Number == n {
+				result := f
+				return &result, nil
+			}
+		} else if strings.EqualFold(f.Name, arg) {
+			result := f
+			return &result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("favorite %q not found", arg)
 }
 
 // GetCacheTTL returns the cache time-to-live in hours (default: 24)

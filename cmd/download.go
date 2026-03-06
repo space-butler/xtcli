@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"xtcli/config"
 	"xtcli/consts"
 	"xtcli/xtream"
 
@@ -18,16 +19,30 @@ import (
 var downloadCmd = &cobra.Command{
 	Use:   "download <stream-id>",
 	Short: "Download a stream by ID (e.g. a VOD movie found via search)",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		streamID, err := strconv.ParseInt(args[0], 10, 64)
-		if err != nil {
-			return err
-		}
 		output, _ := cmd.Flags().GetString("output")
 		streamType, _ := cmd.Flags().GetString("type")
 		format, _ := cmd.Flags().GetString("format")
 		quiet, _ := cmd.Flags().GetBool("quiet")
+		favArg, _ := cmd.Flags().GetString("fav")
+
+		if favArg != "" {
+			fav, err := config.GetFavorite(favArg)
+			if err != nil {
+				return err
+			}
+			return handleDownload(fav.StreamID, output, fav.Type, format, quiet)
+		}
+
+		if len(args) == 0 {
+			return fmt.Errorf("either a stream-id argument or --fav flag is required")
+		}
+
+		streamID, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return err
+		}
 		return handleDownload(streamID, output, streamType, format, quiet)
 	},
 }
@@ -37,6 +52,7 @@ func init() {
 	downloadCmd.Flags().StringP("type", "t", "vod", "Stream type: live or vod")
 	downloadCmd.Flags().StringP("format", "f", "mkv", "Format/extension for VOD (e.g. mkv, mp4)")
 	downloadCmd.Flags().BoolP("quiet", "q", false, "Quiet mode (no progress output)")
+	downloadCmd.Flags().StringP("fav", "", "", "Favorite number or name to download")
 	rootCmd.AddCommand(downloadCmd)
 }
 
