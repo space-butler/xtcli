@@ -18,20 +18,15 @@ var listCmd = &cobra.Command{
 }
 
 var listCategoriesCmd = &cobra.Command{
-	Use:     "categories [type]",
+	Use:     "categories",
 	Aliases: []string{"c", "cat"},
-	Short:   "List categories (type: live or vod, default: live)",
-	Args:    cobra.MaximumNArgs(1),
+	Short:   "List categories from the Xtream Codes IPTV server. Default is live TV categories, use --type vod for video on demand categories.",
+	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		categoryType := "live"
-		if len(args) > 0 {
-			categoryType = args[0]
-		}
+		categoryType, _ := cmd.Flags().GetString("type")
 
 		var catType consts.CategoryType
 		switch categoryType {
-		case "live":
-			catType = consts.CATEGORY_TYPE_LIVE
 		case "vod":
 			catType = consts.CATEGORY_TYPE_VOD
 		default:
@@ -65,7 +60,8 @@ var listStreamCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return handleListStream(streamID)
+		streamType, _ := cmd.Flags().GetString("type")
+		return handleListStream(streamID, streamType)
 	},
 }
 
@@ -102,7 +98,9 @@ var listURLCmd = &cobra.Command{
 func init() {
 	listURLCmd.Flags().StringP("format", "f", "ts", "Stream format (ts, m3u8, etc.)")
 	listEPGCmd.Flags().IntP("limit", "l", 4, "Number of EPG entries to retrieve")
-	listStreamsCmd.Flags().StringP("type", "t", "live", "Stream type: live or vod (video on demand)")
+	listStreamsCmd.Flags().StringP("type", "t", "live", "Stream type: live || vod")
+	listStreamCmd.Flags().StringP("type", "t", "live", "Stream type: live || vod")
+	listCategoriesCmd.Flags().StringP("type", "t", "live", "Category type: live || vod")
 
 	listCmd.AddCommand(listCategoriesCmd)
 	listCmd.AddCommand(listStreamsCmd)
@@ -161,8 +159,16 @@ func handleListStreams(categoryID int64, streamType string) error {
 	return nil
 }
 
-func handleListStream(streamID int64) error {
-	stream, err := xtream.GetStream(streamID)
+func handleListStream(streamID int64, streamType string) error {
+	var stream *xtream.Stream
+	var err error
+
+	switch streamType {
+	case "vod":
+		stream, err = xtream.GetVodStream(streamID)
+	default:
+		stream, err = xtream.GetStream(streamID)
+	}
 	if err != nil {
 		return err
 	}

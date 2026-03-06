@@ -348,6 +348,67 @@ func GetStream(streamID int64) (*Stream, error) {
 	return nil, fmt.Errorf("stream with ID %d not found", streamID)
 }
 
+func GetVodStream(streamID int64) (*Stream, error) {
+	if !IsInitialized() {
+		return nil, ErrClientNotInitialized
+	}
+
+	// Try to find in all cached VOD streams first
+	allStreams := cache.GetAllStreams()
+	for _, s := range allStreams {
+		if s.ID == streamID && s.Type == "movie" {
+			return &Stream{
+				Added:              s.Added,
+				CategoryID:         s.CategoryID,
+				CategoryName:       s.CategoryName,
+				ContainerExtension: s.ContainerExtension,
+				CustomSid:          s.CustomSid,
+				DirectSource:       s.DirectSource,
+				EPGChannelID:       s.EPGChannelID,
+				Icon:               s.Icon,
+				ID:                 s.ID,
+				Name:               s.Name,
+				Number:             s.Number,
+				Rating:             s.Rating,
+				Type:               s.Type,
+			}, nil
+		}
+	}
+
+	// Fetch all VOD streams from server (no category filter)
+	streams, err := cli.xtreamClient.GetVideoOnDemandStreams("")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, s := range streams {
+		if int64(s.ID) == streamID {
+			var added time.Time
+			if s.Added != nil {
+				added = s.Added.Time
+			}
+
+			return &Stream{
+				Added:              added,
+				CategoryID:         int64(s.CategoryID),
+				CategoryName:       s.CategoryName,
+				ContainerExtension: s.ContainerExtension,
+				CustomSid:          s.CustomSid,
+				DirectSource:       s.DirectSource,
+				EPGChannelID:       s.EPGChannelID,
+				Icon:               s.Icon,
+				ID:                 int64(s.ID),
+				Name:               s.Name,
+				Number:             int64(s.Number),
+				Rating:             float32(s.Rating),
+				Type:               s.Type,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("VOD stream with ID %d not found", streamID)
+}
+
 func GetShortEPG(streamID int64, limit int) ([]EPG, error) {
 	if !IsInitialized() {
 		return nil, ErrClientNotInitialized
