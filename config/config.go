@@ -40,10 +40,16 @@ func Save(cfg *Config) error {
 // CreateDefault creates and saves a default config file with placeholder values
 func CreateDefault() error {
 	cfg := &Config{
-		Username: "your_user_name",
-		Password: "your_password",
-		Host:     "https://path.to.your.xtream.iptv.server",
-		VlcPath:  "/path/to/vlc",
+		DefaultProvider: "default",
+		Providers: []Provider{
+			{
+				Name:     "default",
+				Username: "your_user_name",
+				Password: "your_password",
+				Host:     "https://path.to.your.xtream.iptv.server",
+			},
+		},
+		VlcPath: "/path/to/vlc",
 	}
 	return Save(cfg)
 }
@@ -168,4 +174,126 @@ func GetCacheTTL() (int, error) {
 		return 24, nil
 	}
 	return cfg.CacheTTL, nil
+}
+
+// GetProvider returns the provider matching the given name (case-insensitive).
+// If name is empty, it returns the default provider.
+func GetProvider(name string) (*Provider, error) {
+	cfg, err := Load()
+	if err != nil {
+		return nil, err
+	}
+
+	if name == "" {
+		name = cfg.DefaultProvider
+	}
+
+	if name == "" {
+		if len(cfg.Providers) > 0 {
+			p := cfg.Providers[0]
+			return &p, nil
+		}
+		return nil, fmt.Errorf("no providers configured; run 'xtcli config provider add' to add one")
+	}
+
+	for _, p := range cfg.Providers {
+		if strings.EqualFold(p.Name, name) {
+			result := p
+			return &result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("provider %q not found", name)
+}
+
+// AddProvider adds or updates a provider by name.
+func AddProvider(p Provider) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	for i, existing := range cfg.Providers {
+		if strings.EqualFold(existing.Name, p.Name) {
+			cfg.Providers[i] = p
+			return Save(cfg)
+		}
+	}
+
+	cfg.Providers = append(cfg.Providers, p)
+
+	// If this is the first provider, set it as default
+	if cfg.DefaultProvider == "" {
+		cfg.DefaultProvider = p.Name
+	}
+
+	return Save(cfg)
+}
+
+// RemoveProvider removes a provider by name (case-insensitive).
+// Returns true if a provider was actually removed.
+func RemoveProvider(name string) (bool, error) {
+	cfg, err := Load()
+	if err != nil {
+		return false, err
+	}
+
+	newProviders := make([]Provider, 0)
+	removed := false
+	for _, p := range cfg.Providers {
+		if strings.EqualFold(p.Name, name) {
+			removed = true
+		} else {
+			newProviders = append(newProviders, p)
+		}
+	}
+
+	if !removed {
+		return false, nil
+	}
+
+	cfg.Providers = newProviders
+
+	// If the default was removed, clear it or set to first remaining
+	if strings.EqualFold(cfg.DefaultProvider, name) {
+		if len(cfg.Providers) > 0 {
+			cfg.DefaultProvider = cfg.Providers[0].Name
+		} else {
+			cfg.DefaultProvider = ""
+		}
+	}
+
+	return true, Save(cfg)
+}
+
+// ListProviders returns all configured providers.
+func ListProviders() ([]Provider, string, error) {
+	cfg, err := Load()
+	if err != nil {
+		return nil, "", err
+	}
+	return cfg.Providers, cfg.DefaultProvider, nil
+}
+
+// SetDefaultProvider sets the default provider by name.
+func SetDefaultProvider(name string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for _, p := range cfg.Providers {
+		if strings.EqualFold(p.Name, name) {
+			cfg.DefaultProvider = p.Name
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("provider %q not found", name)
+	}
+
+	return Save(cfg)
 }
