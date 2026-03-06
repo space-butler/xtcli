@@ -35,7 +35,7 @@ func handlePlayStream(streamID int64) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Playing stream ID %d with VLC...\n", streamID)
+	fmt.Printf("Playing stream ID %d...\n", streamID)
 	cmd := exec.Command(cfg.VlcPath, streamURL)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

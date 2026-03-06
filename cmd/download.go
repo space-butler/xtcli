@@ -17,7 +17,7 @@ import (
 
 var downloadCmd = &cobra.Command{
 	Use:   "download <stream-id>",
-	Short: "Download a stream by ID using VLC (e.g. a VOD movie found via search)",
+	Short: "Download a stream by ID (e.g. a VOD movie found via search)",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		streamID, err := strconv.ParseInt(args[0], 10, 64)
@@ -74,7 +74,7 @@ func handleDownload(streamID int64, output, streamType, format string, quiet boo
 	sout := fmt.Sprintf("#std{access=file,mux=%s,dst=%s}", format, absOutput)
 
 	if !quiet {
-		fmt.Printf("Downloading stream %d to %s using VLC...\n", streamID, output)
+		fmt.Printf("Downloading stream %d to %s...\n", streamID, output)
 	}
 
 	vlcCmd := exec.Command(cfg.VlcPath,
