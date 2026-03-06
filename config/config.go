@@ -22,12 +22,17 @@ func Exists() bool {
 // GetConfigPath returns the full path to the config file
 func GetConfigPath() string {
 	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, consts.CONFIG_FILE_NAME)
+	return filepath.Join(homeDir, consts.CONFIG_DIR_NAME, consts.CONFIG_FILE_NAME)
 }
 
-// Save writes the Config to a JSON file in the user's home directory
+// Save writes the Config to a JSON file
 func Save(cfg *Config) error {
 	configPath := GetConfigPath()
+
+	// Ensure the directory exists
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		return err
+	}
 
 	data, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {

@@ -67,8 +67,7 @@ var cacheInfoCmd = &cobra.Command{
 	Short: "Show cache information",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cachePath := cache.GetCachePath()
-		fmt.Printf("Cache file: %s\n", cachePath)
+		fmt.Print(cache.Info())
 
 		cacheTTL, _ := config.GetCacheTTL()
 		fmt.Printf("Cache TTL: %d hours\n", cacheTTL)
