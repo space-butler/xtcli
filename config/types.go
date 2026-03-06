@@ -7,11 +7,17 @@ type Favorite struct {
 	StreamID int64  `json:"stream_id"`
 }
 
+type Provider struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Host     string `json:"host"`
+}
+
 type Config struct {
-	Username  string     `json:"username"`
-	Password  string     `json:"password"`
-	Host      string     `json:"host"`
-	VlcPath   string     `json:"vlc_path,omitempty"`
-	Favorites []Favorite `json:"favorites,omitempty"`
-	CacheTTL  int        `json:"cache_ttl,omitempty"` // Cache time-to-live in hours (default: 24)
+	DefaultProvider string     `json:"default_provider,omitempty"`
+	Providers       []Provider `json:"providers,omitempty"`
+	VlcPath         string     `json:"vlc_path,omitempty"`
+	Favorites       []Favorite `json:"favorites,omitempty"`
+	CacheTTL        int        `json:"cache_ttl,omitempty"` // Cache time-to-live in hours (default: 24)
 }
