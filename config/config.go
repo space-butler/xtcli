@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"xtcli/consts"
 )
 
@@ -62,57 +64,70 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// AddFavorites adds stream IDs to the favorites list
-func AddFavorites(streamIDs []string) error {
+// AddFavorite adds a favorite to the favorites list, keyed by name
+func AddFavorite(fav Favorite) error {
 	cfg, err := Load()
 	if err != nil {
 		return err
 	}
 
-	// Create a map for quick lookup to avoid duplicates
-	existing := make(map[string]bool)
-	for _, id := range cfg.Favorites {
-		existing[id] = true
-	}
-
-	// Add new stream IDs if not already present
-	for _, id := range streamIDs {
-		if !existing[id] {
-			cfg.Favorites = append(cfg.Favorites, id)
-			existing[id] = true
+	// Replace if name already exists, preserving its number
+	for i, f := range cfg.Favorites {
+		if strings.EqualFold(f.Name, fav.Name) {
+			fav.Number = f.Number
+			cfg.Favorites[i] = fav
+			return Save(cfg)
 		}
 	}
 
+	// Assign the next number
+	maxNum := 0
+	for _, f := range cfg.Favorites {
+		if f.Number > maxNum {
+			maxNum = f.Number
+		}
+	}
+	fav.Number = maxNum + 1
+
+	cfg.Favorites = append(cfg.Favorites, fav)
 	return Save(cfg)
 }
 
-// RemoveFavorites removes stream IDs from the favorites list
-func RemoveFavorites(streamIDs []string) error {
+// RemoveFavorites removes favorites by number or name (case-insensitive).
+// Returns the number of favorites actually removed.
+func RemoveFavorites(args []string) (int, error) {
 	cfg, err := Load()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	// Create a map of IDs to remove
-	toRemove := make(map[string]bool)
-	for _, id := range streamIDs {
-		toRemove[id] = true
-	}
-
-	// Filter out the stream IDs to remove
-	newFavorites := make([]string, 0)
-	for _, id := range cfg.Favorites {
-		if !toRemove[id] {
-			newFavorites = append(newFavorites, id)
+	newFavorites := make([]Favorite, 0)
+	for _, f := range cfg.Favorites {
+		remove := false
+		for _, arg := range args {
+			// Try matching by number first
+			if n, err := strconv.Atoi(arg); err == nil {
+				if f.Number == n {
+					remove = true
+					break
+				}
+			} else if strings.EqualFold(f.Name, arg) {
+				remove = true
+				break
+			}
+		}
+		if !remove {
+			newFavorites = append(newFavorites, f)
 		}
 	}
 
+	removed := len(cfg.Favorites) - len(newFavorites)
 	cfg.Favorites = newFavorites
-	return Save(cfg)
+	return removed, Save(cfg)
 }
 
-// GetFavorites returns the list of favorite stream IDs
-func GetFavorites() ([]string, error) {
+// GetFavorites returns the list of favorites
+func GetFavorites() ([]Favorite, error) {
 	cfg, err := Load()
 	if err != nil {
 		return nil, err
