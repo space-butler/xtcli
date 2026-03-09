@@ -1,17 +1,18 @@
 package config
 
-type Favorite struct {
-	Number   int    `json:"number"`
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	StreamID int64  `json:"stream_id"`
-}
-
 type Provider struct {
 	Name     string `json:"name"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Host     string `json:"host"`
+}
+
+type Favorite struct {
+	Number   int    `json:"number"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	StreamID int64  `json:"stream_id"`
+	Provider string `json:"provider"`
 }
 
 type Config struct {

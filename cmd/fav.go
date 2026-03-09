@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"xtcli/config"
 
@@ -38,7 +39,7 @@ var favAddCmd = &cobra.Command{
 			StreamID: streamID,
 		}
 
-		if err := config.AddFavorite(fav); err != nil {
+		if err := config.AddFavorite(fav, activeProvider.Name); err != nil {
 			return err
 		}
 
@@ -52,7 +53,7 @@ var favDelCmd = &cobra.Command{
 	Short: "Remove favorites by number or name",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		removed, err := config.RemoveFavorites(args)
+		removed, err := config.RemoveFavorites(args, activeProvider.Name)
 		if err != nil {
 			return err
 		}
@@ -72,7 +73,7 @@ var favListCmd = &cobra.Command{
 	Short: "List favorite streams",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		favorites, err := config.GetFavorites()
+		favorites, err := config.GetFavorites(activeProvider.Name)
 		if err != nil {
 			return err
 		}
@@ -82,14 +83,42 @@ var favListCmd = &cobra.Command{
 			return nil
 		}
 
+		sort.Slice(favorites, func(i, j int) bool {
+			return favorites[i].Number < favorites[j].Number
+		})
+
 		table := tablewriter.NewWriter(os.Stdout)
-		table.Header("#", "Name", "Type", "Stream ID")
+		table.Header("#", "Provider", "Name", "Type", "Stream ID")
 
 		for _, fav := range favorites {
-			table.Append(strconv.Itoa(fav.Number), fav.Name, fav.Type, strconv.FormatInt(fav.StreamID, 10))
+			table.Append(strconv.Itoa(fav.Number), fav.Provider, fav.Name, fav.Type, strconv.FormatInt(fav.StreamID, 10))
 		}
 
 		table.Render()
+		return nil
+	},
+}
+
+var favSwapCmd = &cobra.Command{
+	Use:   "swap <number> <number>",
+	Short: "Swap the order of two favorites by their numbers",
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		a, err := strconv.Atoi(args[0])
+		if err != nil || a <= 0 {
+			return fmt.Errorf("invalid number %q: must be a positive integer", args[0])
+		}
+		b, err := strconv.Atoi(args[1])
+		if err != nil || b <= 0 {
+			return fmt.Errorf("invalid number %q: must be a positive integer", args[1])
+		}
+		if a == b {
+			return fmt.Errorf("numbers must be different")
+		}
+		if err := config.SwapFavorites(a, b, activeProvider.Name); err != nil {
+			return err
+		}
+		fmt.Printf("Swapped favorites #%d and #%d\n", a, b)
 		return nil
 	},
 }
@@ -102,5 +131,6 @@ func init() {
 	favCmd.AddCommand(favAddCmd)
 	favCmd.AddCommand(favDelCmd)
 	favCmd.AddCommand(favListCmd)
+	favCmd.AddCommand(favSwapCmd)
 	rootCmd.AddCommand(favCmd)
 }

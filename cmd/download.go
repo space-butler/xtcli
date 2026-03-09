@@ -28,7 +28,7 @@ var downloadCmd = &cobra.Command{
 		favArg, _ := cmd.Flags().GetString("fav")
 
 		if favArg != "" {
-			fav, err := config.GetFavorite(favArg)
+			fav, err := config.GetFavorite(favArg, activeProvider.Name)
 			if err != nil {
 				return err
 			}

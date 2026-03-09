@@ -76,16 +76,18 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// AddFavorite adds a favorite to the favorites list, keyed by name
-func AddFavorite(fav Favorite) error {
+// AddFavorite adds a favorite to the favorites list, keyed by name and provider
+func AddFavorite(fav Favorite, providerName string) error {
 	cfg, err := Load()
 	if err != nil {
 		return err
 	}
 
-	// Replace if name already exists, preserving its number
+	fav.Provider = providerName
+
+	// Replace if name+provider already exists, preserving its number
 	for i, f := range cfg.Favorites {
-		if strings.EqualFold(f.Name, fav.Name) {
+		if strings.EqualFold(f.Name, fav.Name) && strings.EqualFold(f.Provider, providerName) {
 			fav.Number = f.Number
 			cfg.Favorites[i] = fav
 			return Save(cfg)
@@ -105,9 +107,9 @@ func AddFavorite(fav Favorite) error {
 	return Save(cfg)
 }
 
-// RemoveFavorites removes favorites by number or name (case-insensitive).
+// RemoveFavorites removes favorites by number or name (case-insensitive) for the given provider.
 // Returns the number of favorites actually removed.
-func RemoveFavorites(args []string) (int, error) {
+func RemoveFavorites(args []string, providerName string) (int, error) {
 	cfg, err := Load()
 	if err != nil {
 		return 0, err
@@ -115,6 +117,11 @@ func RemoveFavorites(args []string) (int, error) {
 
 	newFavorites := make([]Favorite, 0)
 	for _, f := range cfg.Favorites {
+		// Keep favorites belonging to other providers untouched
+		if !strings.EqualFold(f.Provider, providerName) {
+			newFavorites = append(newFavorites, f)
+			continue
+		}
 		remove := false
 		for _, arg := range args {
 			// Try matching by number first
@@ -138,23 +145,32 @@ func RemoveFavorites(args []string) (int, error) {
 	return removed, Save(cfg)
 }
 
-// GetFavorites returns the list of favorites
-func GetFavorites() ([]Favorite, error) {
+// GetFavorites returns the list of favorites for the given provider
+func GetFavorites(providerName string) ([]Favorite, error) {
 	cfg, err := Load()
 	if err != nil {
 		return nil, err
 	}
-	return cfg.Favorites, nil
+	var result []Favorite
+	for _, f := range cfg.Favorites {
+		if strings.EqualFold(f.Provider, providerName) {
+			result = append(result, f)
+		}
+	}
+	return result, nil
 }
 
-// GetFavorite looks up a single favorite by number (if arg is an integer) or name (case-insensitive).
-func GetFavorite(arg string) (*Favorite, error) {
+// GetFavorite looks up a single favorite by number (if arg is an integer) or name (case-insensitive) for the given provider.
+func GetFavorite(arg string, providerName string) (*Favorite, error) {
 	cfg, err := Load()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, f := range cfg.Favorites {
+		if !strings.EqualFold(f.Provider, providerName) {
+			continue
+		}
 		if n, err := strconv.Atoi(arg); err == nil {
 			if f.Number == n {
 				result := f
@@ -166,7 +182,37 @@ func GetFavorite(arg string) (*Favorite, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("favorite %q not found", arg)
+	return nil, fmt.Errorf("favorite %q not found for provider %q", arg, providerName)
+}
+
+// SwapFavorites swaps the order numbers of two favorites (by number) for the given provider.
+func SwapFavorites(a, b int, providerName string) error {
+	cfg, err := Load()
+	if err != nil {
+		return err
+	}
+
+	var idxA, idxB = -1, -1
+	for i, f := range cfg.Favorites {
+		if !strings.EqualFold(f.Provider, providerName) {
+			continue
+		}
+		if f.Number == a {
+			idxA = i
+		} else if f.Number == b {
+			idxB = i
+		}
+	}
+
+	if idxA == -1 {
+		return fmt.Errorf("favorite #%d not found for provider %q", a, providerName)
+	}
+	if idxB == -1 {
+		return fmt.Errorf("favorite #%d not found for provider %q", b, providerName)
+	}
+
+	cfg.Favorites[idxA].Number, cfg.Favorites[idxB].Number = b, a
+	return Save(cfg)
 }
 
 // GetCacheTTL returns the cache time-to-live in hours (default: 24)
