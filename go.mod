@@ -4,7 +4,7 @@ go 1.24.7
 
 require (
 	github.com/olekukonko/tablewriter v1.1.2
-	github.com/space-butler/go.xtream-codes v0.0.3
+	github.com/space-butler/go.xtream-codes v0.1.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 )
