@@ -10,8 +10,6 @@ import (
 	"xtcli/consts"
 )
 
-const CACHE_DIR_NAME = ".xtcli/cache"
-
 var providerName string
 var cacheTTL time.Duration
 
@@ -24,7 +22,7 @@ func Initialize(provider string, ttlHours int) {
 // GetCachePath returns the root cache directory for the active provider
 func GetCachePath() string {
 	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, CACHE_DIR_NAME, providerName)
+	return filepath.Join(homeDir, consts.CONFIG_DIR_NAME, consts.CACHE_DIR_NAME, providerName)
 }
 
 // filePath builds and ensures a cache file path: <root>/<subdir>/<filename>.json
