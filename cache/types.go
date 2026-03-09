@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -44,12 +45,8 @@ type EPG struct {
 	Title          string    `json:"title"`
 }
 
-// CacheData holds all cached data from the IPTV server
-type CacheData struct {
-	Timestamp      time.Time          `json:"timestamp"`
-	LiveCategories []Category         `json:"live_categories"`
-	VODCategories  []Category         `json:"vod_categories"`
-	Streams        map[int64][]Stream `json:"streams"`     // Key: live category ID
-	VODStreams     map[int64][]Stream `json:"vod_streams"` // Key: VOD category ID
-	EPGData        map[int64][]EPG    `json:"epg_data"`   // Key: stream ID
+// cachedFile wraps any cached payload with a timestamp for TTL checks
+type cachedFile struct {
+	Timestamp time.Time       `json:"timestamp"`
+	Data      json.RawMessage `json:"data"`
 }

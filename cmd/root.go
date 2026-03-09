@@ -51,7 +51,7 @@ var rootCmd = &cobra.Command{
 
 		// Initialize xtream client with cache TTL from config
 		cacheTTL, _ := config.GetCacheTTL()
-		if err := xtream.InitializeWithCacheTTL(activeProvider.Username, activeProvider.Password, activeProvider.Host, cacheTTL); err != nil {
+		if err := xtream.InitializeWithCacheTTL(activeProvider.Username, activeProvider.Password, activeProvider.Host, activeProvider.Name, cacheTTL); err != nil {
 			return err
 		}
 

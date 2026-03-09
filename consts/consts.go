@@ -5,9 +5,11 @@ const (
 	EXIT_NO_CONFIG = 1
 )
 
-// File Names
 const (
-	CONFIG_FILE_NAME = ".xtcli"
+	CONFIG_DIR_NAME  = ".xtcli"
+	CONFIG_FILE_NAME = "config.json"
+
+	CACHE_DIR_NAME = "cache"
 )
 
 // Category Types

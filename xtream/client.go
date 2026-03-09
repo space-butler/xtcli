@@ -23,11 +23,11 @@ func IsInitialized() bool {
 	return cli != nil
 }
 
-func Initialize(username, password, serverURL string) error {
-	return InitializeWithCacheTTL(username, password, serverURL, 24)
+func Initialize(username, password, serverURL, providerName string) error {
+	return InitializeWithCacheTTL(username, password, serverURL, providerName, 24)
 }
 
-func InitializeWithCacheTTL(username, password, serverURL string, cacheTTLHours int) error {
+func InitializeWithCacheTTL(username, password, serverURL, providerName string, cacheTTLHours int) error {
 	if IsInitialized() {
 		return nil
 	}
@@ -46,11 +46,7 @@ func InitializeWithCacheTTL(username, password, serverURL string, cacheTTLHours 
 	}
 
 	// Initialize cache
-	cache.Initialize(cacheTTLHours)
-	if err := cache.Load(); err != nil {
-		// Log warning but don't fail initialization
-		fmt.Printf("Warning: Failed to load cache: %v\n", err)
-	}
+	cache.Initialize(providerName, cacheTTLHours)
 
 	return nil
 }
@@ -108,7 +104,6 @@ func GetCategories(catType consts.CategoryType) ([]Category, error) {
 		}
 	}
 	cache.SetCategories(catType, cacheCategories)
-	cache.Save()
 
 	return result, nil
 }
@@ -195,7 +190,6 @@ func GetStreamsByCategory(categoryID int64) ([]Stream, error) {
 		}
 	}
 	cache.SetStreams(categoryID, cacheStreams)
-	cache.Save()
 
 	return result, nil
 }
@@ -281,7 +275,6 @@ func GetVodStreamsByCategory(categoryID int64) ([]Stream, error) {
 		}
 	}
 	cache.SetVODStreams(categoryID, cacheStreams)
-	cache.Save()
 
 	return result, nil
 }
@@ -354,9 +347,9 @@ func GetVodStream(streamID int64) (*Stream, error) {
 	}
 
 	// Try to find in all cached VOD streams first
-	allStreams := cache.GetAllStreams()
+	allStreams := cache.GetAllVODStreams()
 	for _, s := range allStreams {
-		if s.ID == streamID && s.Type == "movie" {
+		if s.ID == streamID {
 			return &Stream{
 				Added:              s.Added,
 				CategoryID:         s.CategoryID,
@@ -502,7 +495,6 @@ func GetShortEPG(streamID int64, limit int) ([]EPG, error) {
 		}
 	}
 	cache.SetEPG(streamID, cacheEPG)
-	cache.Save()
 
 	return result, nil
 }
