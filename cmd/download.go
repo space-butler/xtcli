@@ -137,10 +137,15 @@ func handleDownload(streamID int64, output, streamType, format string, quiet boo
 					if !lastTime.IsZero() && now.After(lastTime) {
 						elapsed := now.Sub(lastTime).Seconds()
 						if elapsed > 0 {
-							deltaMB := float64(size-lastSize) / (1024 * 1024)
-							mbPerSec := deltaMB / elapsed
-							if mbPerSec > 0 {
-								speed = fmt.Sprintf(" (%.1f MB/s)", mbPerSec)
+							deltaBytes := float64(size - lastSize)
+							bytesPerSec := deltaBytes / elapsed
+							if bytesPerSec > 0 {
+								kbPerSec := bytesPerSec / 1024
+								if kbPerSec >= 1024 {
+									speed = fmt.Sprintf(" (%.1f MB/s)", kbPerSec/1024)
+								} else {
+									speed = fmt.Sprintf(" (%.1f KB/s)", kbPerSec)
+								}
 							}
 						}
 					}
