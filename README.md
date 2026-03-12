@@ -4,7 +4,7 @@
 
 # xtcli
 
-A command line client for interacting with Xtream Codes IPTV servers. It lets you browse live TV and VOD categories, search for streams, view EPG data, play and download streams, manage favorites, and export playlists — all from the terminal.
+A command line client for interacting with Xtream Codes IPTV servers. It lets you browse live TV and VOD categories, search for streams, view EPG data, play and download streams, manage favorites, and export playlists - all from the terminal.
 
 ---
 
