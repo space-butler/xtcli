@@ -13,8 +13,8 @@ var activeProvider *config.Provider
 
 var rootCmd = &cobra.Command{
 	Use:   "xtcli",
-	Short: "A tool to dump Xtream Codes IPTV server data",
-	Long:  `xtcli is a command-line tool that allows users to extract and dump data from Xtream Codes IPTV servers.`,
+	Short: "A CLI client for Xtream Codes IPTV servers",
+	Long:  `xtcli is a command-line tool for interacting with Xtream Codes IPTV servers. Browse categories and streams, search for content, play streams, download VODs, manage favorites, dump M3U8 playlists and XMLTV EPG data, and manage multiple providers — all from the terminal.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Skip config loading for commands that don't need it (like 'config create')
 		if cmd.Name() == "create" || cmd.Name() == "config" {
