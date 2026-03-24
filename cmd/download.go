@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	"xtcli/config"
@@ -17,9 +19,10 @@ import (
 )
 
 var downloadCmd = &cobra.Command{
-	Use:   "download <stream-id>",
-	Short: "Download a stream by ID (e.g. a VOD movie found via search)",
-	Args:  cobra.MaximumNArgs(1),
+	Use:          "download <stream-id>",
+	Short:        "Download a stream by ID (e.g. a VOD movie found via search)",
+	Args:         cobra.MaximumNArgs(1),
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		output, _ := cmd.Flags().GetString("output")
 		streamType, _ := cmd.Flags().GetString("type")
@@ -132,26 +135,24 @@ func handleDownload(streamID int64, output, streamType, format string, quiet boo
 					}
 					size := info.Size()
 					now := time.Now()
-					mb := float64(size) / (1024 * 1024)
 					speed := ""
 					if !lastTime.IsZero() && now.After(lastTime) {
 						elapsed := now.Sub(lastTime).Seconds()
 						if elapsed > 0 {
-							deltaBytes := float64(size - lastSize)
-							bytesPerSec := deltaBytes / elapsed
-							if bytesPerSec > 0 {
-								kbPerSec := bytesPerSec / 1024
-								if kbPerSec >= 1024 {
-									speed = fmt.Sprintf(" (%.1f MB/s)", kbPerSec/1024)
+							deltaBytes := size - lastSize
+							if deltaBytes > 0 {
+								bytesPerSec := float64(deltaBytes) / elapsed
+								if bytesPerSec >= float64(consts.BYTES_PER_MB) {
+									speed = fmt.Sprintf("(%.1f MB/s)", bytesPerSec/float64(consts.BYTES_PER_MB))
 								} else {
-									speed = fmt.Sprintf(" (%.1f KB/s)", kbPerSec)
+									speed = fmt.Sprintf("(%.1f KB/s)", bytesPerSec/float64(consts.BYTES_PER_KB))
 								}
 							}
 						}
 					}
 					lastSize = size
 					lastTime = now
-					fmt.Fprintf(os.Stderr, "\r  Downloaded: %.1f MB%s   ", mb, speed)
+					fmt.Fprintf(os.Stderr, "\r  Downloaded: %.1f MB %s\033[K", float64(size)/float64(consts.BYTES_PER_MB), speed)
 				}
 			}
 		}()
@@ -163,13 +164,35 @@ func handleDownload(streamID int64, output, streamType, format string, quiet boo
 		close(done)
 	}()
 
+	interrupted := false
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	go func() {
+		select {
+		case <-sigCh:
+			interrupted = true
+			vlcCmd.Process.Kill()
+		case <-done:
+		}
+	}()
+
 	<-done
 	cancel()
+
+	if interrupted {
+		<-errCh
+		if !quiet {
+			fmt.Fprintf(os.Stderr, "\r  Cancelled.\033[K\n")
+		}
+		return nil
+	}
 
 	if !quiet {
 		if _, err := os.Stat(absOutput); err == nil {
 			info, _ := os.Stat(absOutput)
-			sizeMB := float64(info.Size()) / (1024 * 1024)
+			sizeMB := float64(info.Size()) / float64(consts.BYTES_PER_MB)
 			fmt.Fprintf(os.Stderr, "\r  Done: %.1f MB saved to %s\n", sizeMB, output)
 		}
 	}
