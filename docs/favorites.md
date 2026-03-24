@@ -35,12 +35,32 @@ xtcli fav swap 1 3
 
 ## Using favorites
 
-Play a favorite:
+See [playing.md](playing.md) and [downloading.md](downloading.md) for full details and available flags.
+
+For example, to play a favorite:
 ```
 xtcli play --fav <number-or-name>
 ```
 
-Download a favorite:
+To download a favorite:
 ```
 xtcli download --fav <number-or-name>
 ```
+
+## Flags
+
+### `fav add`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--name` | `-n` | | Shortcut name for the favorite (required) |
+| `--id` | `-i` | | Stream ID (required) |
+| `--type` | `-t` | `live` | Stream type: `live` or `vod` |
+
+### `fav del`
+
+Takes one or more positional arguments: favorite numbers or names.
+
+### `fav swap`
+
+Takes two positional arguments: the numbers of the two favorites to swap.

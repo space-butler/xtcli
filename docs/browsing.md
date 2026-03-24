@@ -1,5 +1,7 @@
 # Browsing
 
+Browsing information from your provider is primarily done through the `list` command. Such as categories, streams, VOD titles, EPG data, and stream URLs.
+
 ## List live TV categories
 ```
 xtcli list categories
@@ -59,3 +61,35 @@ To get a specific format:
 ```
 xtcli list url <stream-id> --format m3u8
 ```
+
+## Flags
+
+### `list categories`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--type` | `-t` | `live` | Category type: `live` or `vod` |
+
+### `list streams`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--type` | `-t` | `live` | Stream type: `live` or `vod` |
+
+### `list stream`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--type` | `-t` | `live` | Stream type: `live` or `vod` |
+
+### `list epg`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--limit` | `-l` | `4` | Number of EPG entries to retrieve |
+
+### `list url`
+
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--format` | `-f` | `ts` | Stream format (e.g. `ts`, `m3u8`) |
