@@ -26,6 +26,11 @@ A command-line client for [Xtream Codes](https://github.com/AmazingPhase/xtream-
 ## Quick Start
 
 ```sh
+# Clone the repository and build the binary
+git clone https://github.com/space-butler/xtcli.git
+cd xtcli
+go build -o xtcli
+
 # Create a default config file
 xtcli config create
 
