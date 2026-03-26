@@ -162,6 +162,88 @@ func SetEPG(streamID int64, epg []EPG) {
 
 // --- All Streams ---
 
+// readCacheFileAny reads a cached JSON file ignoring TTL — useful for search
+// where stale data is preferable to no data.
+func readCacheFileAny(path string, dest interface{}) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+
+	var cf cachedFile
+	if err := json.Unmarshal(data, &cf); err != nil {
+		return false
+	}
+
+	if err := json.Unmarshal(cf.Data, dest); err != nil {
+		return false
+	}
+
+	return true
+}
+
+// GetEPGAny returns cached EPG data for a stream, ignoring TTL.
+func GetEPGAny(streamID int64) ([]EPG, bool) {
+	path := cacheFilePath("epg", strconv.FormatInt(streamID, 10))
+	var epg []EPG
+	if readCacheFileAny(path, &epg) {
+		return epg, true
+	}
+	return nil, false
+}
+
+// GetCachedEPGStreamIDs returns all stream IDs that have cached EPG files.
+func GetCachedEPGStreamIDs() []int64 {
+	epgDir := filepath.Join(GetCachePath(), "epg")
+	entries, err := os.ReadDir(epgDir)
+	if err != nil {
+		return nil
+	}
+	var ids []int64
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		// strip .json suffix
+		if len(name) > 5 && name[len(name)-5:] == ".json" {
+			name = name[:len(name)-5]
+		}
+		id, err := strconv.ParseInt(name, 10, 64)
+		if err != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// GetAllStreamsAny returns all cached live streams, ignoring TTL.
+func GetAllStreamsAny() []Stream {
+	liveDir := filepath.Join(GetCachePath(), "live")
+	return readAllStreamsFromDirAny(liveDir)
+}
+
+func readAllStreamsFromDirAny(dir string) []Stream {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+
+	var allStreams []Stream
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(dir, entry.Name())
+		var streams []Stream
+		if readCacheFileAny(path, &streams) {
+			allStreams = append(allStreams, streams...)
+		}
+	}
+	return allStreams
+}
+
 // GetAllStreams returns all cached live streams from all category files
 func GetAllStreams() []Stream {
 	liveDir := filepath.Join(GetCachePath(), "live")
