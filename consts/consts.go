@@ -16,6 +16,7 @@ const (
 const (
 	BYTES_PER_KB = int64(1024)
 	BYTES_PER_MB = int64(1024 * 1024)
+	BYTES_PER_GB = int64(1024 * 1024 * 1024)
 )
 
 // Category Types

@@ -230,6 +230,13 @@ func Info() string {
 	})
 
 	info += fmt.Sprintf("Files: %d\n", totalFiles)
-	info += fmt.Sprintf("Total size: %.1f KB\n", float64(totalSize)/1024)
+	switch {
+	case totalSize >= consts.BYTES_PER_GB:
+		info += fmt.Sprintf("Total size: %.1f GB\n", float64(totalSize)/float64(consts.BYTES_PER_GB))
+	case totalSize >= consts.BYTES_PER_MB:
+		info += fmt.Sprintf("Total size: %.1f MB\n", float64(totalSize)/float64(consts.BYTES_PER_MB))
+	default:
+		info += fmt.Sprintf("Total size: %.1f KB\n", float64(totalSize)/float64(consts.BYTES_PER_KB))
+	}
 	return info
 }
