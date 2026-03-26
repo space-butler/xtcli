@@ -95,7 +95,7 @@ func handleSearchStream(searchTerm string, categoryID int64, streamType string) 
 			for _, stream := range streams {
 				if strings.Contains(strings.ToLower(stream.Name), searchLower) {
 					results = append(results, searchResult{
-						Category: stream.CategoryName,
+						Category: category.Name,
 						ID:       stream.ID,
 						Title:    stream.Name,
 					})
@@ -110,12 +110,12 @@ func handleSearchStream(searchTerm string, categoryID int64, streamType string) 
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.Header("Category", "ID", "Title")
+	table.Header("ID", "Category", "Title")
 
 	for _, result := range results {
 		table.Append(
-			result.Category,
 			strconv.FormatInt(result.ID, 10),
+			result.Category,
 			result.Title,
 		)
 	}
