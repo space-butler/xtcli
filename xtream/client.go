@@ -411,8 +411,8 @@ func GetShortEPG(streamID int64, limit int) ([]EPG, error) {
 		limit = 4
 	}
 
-	// Try to get from cache first
-	if cachedEPG, found := cache.GetEPG(streamID); found {
+	// Try to get from cache first, but only if it has enough entries
+	if cachedEPG, found := cache.GetEPG(streamID); found && len(cachedEPG) >= limit {
 		// Convert cache.EPG to xtream.EPG
 		result := make([]EPG, 0, len(cachedEPG))
 		for i, e := range cachedEPG {
